@@ -1,21 +1,20 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { BottomNav, type TabId } from './components/BottomNav'
 import { HomeDashboard } from './screens/HomeDashboard'
-import { LoginScreen } from './screens/LoginScreen'
 import { MoodCheckIn } from './screens/MoodCheckIn'
 import { MorningQuote } from './screens/MorningQuote'
 import { PrioritiesScreen } from './screens/PrioritiesScreen'
 import { ProfileScreen } from './screens/ProfileScreen'
 import { ScheduleScreen } from './screens/ScheduleScreen'
-import { StatsScreen } from './screens/StatsScreen'
 
 type HomePhase = 'quote' | 'sleep' | 'priorities' | 'dashboard'
 
-/** Full in-app experience (behind /app). */
+/** Full in-app experience (behind /app) — no login required for demo. */
 export default function RizeApp() {
-  const [session, setSession] = useState<'login' | 'app'>('login')
-  const [tab, setTab] = useState<TabId>('home')
+  const navigate = useNavigate()
+  const [tab, setTab] = useState<TabId>('schedule')
   const [homePhase, setHomePhase] = useState<HomePhase>('quote')
 
   const goQuoteToSleep = useCallback(() => {
@@ -91,18 +90,12 @@ export default function RizeApp() {
       case 'home':
         return renderHome()
       case 'schedule':
-        return <ScheduleScreen />
-      case 'stats':
-        return <StatsScreen />
+        return <ScheduleScreen /> 
       case 'profile':
-        return <ProfileScreen onLogout={() => setSession('login')} />
+        return <ProfileScreen onLogout={() => navigate('/')} />
       default:
         return null
     }
-  }
-
-  if (session === 'login') {
-    return <LoginScreen onLoggedIn={() => setSession('app')} />
   }
 
   return (
@@ -121,7 +114,7 @@ export default function RizeApp() {
 
       <main className="flex min-h-0 flex-1 flex-col">{renderTab()}</main>
 
-      <div className="h-[calc(5.25rem+env(safe-area-inset-bottom))] shrink-0" aria-hidden />
+      <div className="h-[calc(5.5rem+env(safe-area-inset-bottom))] shrink-0" aria-hidden />
       <BottomNav active={tab} onChange={setTab} />
     </div>
   )

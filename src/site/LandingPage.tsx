@@ -1,5 +1,6 @@
-import { motion } from 'framer-motion'
-import { ArrowRight, BarChart3, CalendarDays, Heart, Sparkles, Sun } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { ArrowLeft, ArrowRight, BarChart3, CalendarDays, Heart, Sun } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SITE } from './config'
 import { SiteFooter } from './SiteFooter'
@@ -11,7 +12,7 @@ const features = [
     icon: Sun,
   },
   {
-    title: 'Schedule you own',
+    title: 'Schedule your own',
     body: 'Day list, calendar, repeats, and swipe between days — your rhythm.',
     icon: CalendarDays,
   },
@@ -26,6 +27,94 @@ const features = [
     icon: Heart,
   },
 ] as const
+
+function FeaturesCarousel() {
+  const [index, setIndex] = useState(0)
+  const [dir, setDir] = useState(0)
+
+  const go = (next: number) => {
+    setDir(next)
+    setIndex((i) => (i + next + features.length) % features.length)
+  }
+
+  const f = features[index]
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.12, duration: 0.5 }}
+      className="mx-auto mt-16 max-w-4xl"
+    >
+      <p className="mb-8 text-center text-sm font-medium text-rize-muted">
+        What you&apos;ll find inside
+      </p>
+      <div className="relative flex items-stretch gap-4 px-12 sm:px-16">
+        <button
+          type="button"
+          onClick={() => go(-1)}
+          className="absolute -left-2 top-1/2 z-10 flex h-14 w-14 -translate-y-1/2 items-center justify-center rounded-2xl border border-white/10 bg-[#0a0c14]/95 text-white shadow-lg transition hover:border-rize-accent/40 hover:bg-rize-accent/15 focus:outline-none focus:ring-2 focus:ring-rize-accent/50 sm:-left-4 sm:h-16 sm:w-16"
+          aria-label="Previous feature"
+        >
+          <ArrowLeft className="h-6 w-6 sm:h-7 sm:w-7" />
+        </button>
+
+        <div className="min-h-[240px] flex-1 overflow-hidden sm:min-h-[280px]">
+          <AnimatePresence mode="wait" custom={dir} initial={false}>
+            <motion.div
+              key={index}
+              custom={dir}
+              initial={{ x: dir >= 0 ? 120 : -120, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: dir >= 0 ? -120 : 120, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="h-full rounded-[28px] border border-white/[0.08] bg-gradient-to-br from-[#15162a]/95 to-[#0a0b14] p-8 shadow-[0_32px_80px_-32px_rgba(0,0,0,0.6)] ring-1 ring-white/[0.04] sm:p-10"
+            >
+              <motion.span
+                className="mb-6 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-rize-accent/15 text-rize-accent ring-1 ring-rize-accent/25 sm:h-16 sm:w-16"
+                layout
+              >
+                <f.icon className="h-7 w-7 sm:h-8 sm:w-8" aria-hidden />
+              </motion.span>
+              <h2 className="text-xl font-semibold text-white sm:text-2xl">{f.title}</h2>
+              <p className="mt-4 text-base leading-relaxed text-rize-muted sm:text-lg">{f.body}</p>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => go(1)}
+          className="absolute -right-2 top-1/2 z-10 flex h-14 w-14 -translate-y-1/2 items-center justify-center rounded-2xl border border-white/10 bg-[#0a0c14]/95 text-white shadow-lg transition hover:border-rize-accent/40 hover:bg-rize-accent/15 focus:outline-none focus:ring-2 focus:ring-rize-accent/50 sm:-right-4 sm:h-16 sm:w-16"
+          aria-label="Next feature"
+        >
+          <ArrowRight className="h-6 w-6 sm:h-7 sm:w-7" />
+        </button>
+      </div>
+
+      <div className="mt-8 flex items-center justify-center gap-2">
+        {features.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => {
+              if (i === index) return
+              setDir(i > index ? 1 : -1)
+              setIndex(i)
+            }}
+            aria-label={`Go to slide ${i + 1}`}
+            aria-current={i === index ? 'true' : undefined}
+            className={`h-2 rounded-full transition-all touch-manipulation ${
+              i === index
+                ? 'w-8 bg-rize-accent'
+                : 'w-2 bg-white/20 hover:bg-white/40'
+            }`}
+          />
+        ))}
+      </div>
+    </motion.div>
+  )
+}
 
 export function LandingPage() {
   return (
@@ -70,11 +159,10 @@ export function LandingPage() {
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="mx-auto max-w-3xl text-center"
           >
-            <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-medium text-rize-muted ring-1 ring-white/[0.06]">
-              <Sparkles className="h-3.5 w-3.5 text-rize-accent" aria-hidden />
-              Self-improvement, without the guilt trip
+            <p className="text-sm text-rize-muted/90 sm:text-base">
+              Self-improvement, without the guilt trip.
             </p>
-            <h1 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl sm:leading-[1.1]">
+            <h1 className="mt-5 text-4xl font-bold tracking-tight text-white sm:text-5xl sm:leading-[1.1]">
               {SITE.name}: your pocket coach for calmer days
             </h1>
             <p className="mt-5 text-lg leading-relaxed text-rize-muted sm:text-xl">{SITE.tagline}</p>
@@ -95,37 +183,7 @@ export function LandingPage() {
             </div>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.12, duration: 0.5 }}
-            className="mx-auto mt-16 max-w-4xl rounded-[32px] border border-white/[0.08] bg-gradient-to-br from-[#15162a]/95 to-[#0a0b14] p-1 shadow-[0_40px_100px_-40px_rgba(0,0,0,0.65)]"
-          >
-            <div className="rounded-[28px] border border-white/[0.05] bg-[#0c0d18]/90 p-8 sm:p-10">
-              <p className="text-center text-sm font-medium text-rize-muted">
-                What you&apos;ll find inside
-              </p>
-              <div className="mt-8 grid gap-5 sm:grid-cols-2">
-                {features.map((f, i) => (
-                  <motion.div
-                    key={f.title}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 + i * 0.05 }}
-                    className="flex gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 text-left ring-1 ring-white/[0.04]"
-                  >
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rize-accent/15 text-rize-accent ring-1 ring-rize-accent/25">
-                      <f.icon className="h-5 w-5" aria-hidden />
-                    </span>
-                    <div>
-                      <h2 className="font-semibold text-white">{f.title}</h2>
-                      <p className="mt-1 text-sm leading-relaxed text-rize-muted">{f.body}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
+          <FeaturesCarousel />
 
           <motion.section
             initial={{ opacity: 0 }}
