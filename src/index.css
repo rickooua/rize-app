@@ -1,0 +1,28 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --color-rize-bg: #05060d;
+  --color-rize-surface: #0e101a;
+  --color-rize-card: #12141f;
+  --color-rize-border: #1e2130;
+  --color-rize-muted: #8b90a5;
+  --color-rize-accent: #9d4edd;
+  --color-rize-accent-dim: #7b2cbf;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-display);
+  background: var(--color-rize-bg);
+  color: #f4f4f8;
+  min-height: 100dvh;
+}
+
+#root {
+  min-height: 100dvh;
+}
