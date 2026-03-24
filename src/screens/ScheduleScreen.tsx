@@ -25,6 +25,20 @@ import {
 
 type Category = OneOffBlock['category']
 
+// Defined outside the component so they're never recreated on re-render.
+// dir > 0 = forward (left-swipe): content follows finger left — exits left, new enters from right
+// dir < 0 = backward (right-swipe): content follows finger right — exits right, new enters from left
+const daySlideVariants = {
+  enter: (dir: number) => ({ x: dir > 0 ? 60 : dir < 0 ? -60 : 0, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit:  (dir: number) => ({ x: dir > 0 ? -60 : 60, opacity: 0 }),
+}
+const calSlideVariants = {
+  enter: (dir: number) => ({ x: dir >= 0 ? 40 : -40, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit:  (dir: number) => ({ x: dir >= 0 ? -40 : 40, opacity: 0 }),
+}
+
 type Props = {
   blocksByDate: Record<string, OneOffBlock[]>
   setBlocksByDate: React.Dispatch<React.SetStateAction<Record<string, OneOffBlock[]>>>
@@ -47,15 +61,18 @@ export function ScheduleScreen({
   const todayKey = dateKey(today)
   const nowMinutes = now.getHours() * 60 + now.getMinutes()
 
-  const [day, setDay] = useState<Date>(() => today)
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
-  const [calendarMonth, setCalendarMonth] = useState<Date>(() => startOfMonth(today))
-  const [calDir, setCalDir] = useState(0)
   const [selectedCalDay, setSelectedCalDay] = useState<Date>(() => today)
+
+  // dir and day/month are ONE atomic state update — they're always on the same render,
+  // so AnimatePresence always sees the correct custom value when the key changes.
+  const [nav, setNav] = useState<{ dir: number; day: Date }>(() => ({ dir: 0, day: today }))
+  const [cal, setCal] = useState<{ dir: number; month: Date }>(() => ({ dir: 0, month: startOfMonth(today) }))
+  const day = nav.day
+  const calendarMonth = cal.month
 
   const [openId, setOpenId] = useState<string | null>(null)
   const [addOpen, setAddOpen] = useState(false)
-  const [dayDir, setDayDir] = useState(0)
 
   const [draft, setDraft] = useState({
     title: '',
@@ -108,31 +125,27 @@ export function ScheduleScreen({
   }, [viewMode])
 
   const goPrevDay = useCallback(() => {
-    setDayDir(-1)
-    setDay((d) => addDays(d, -1))
+    setNav((prev) => ({ dir: -1, day: addDays(prev.day, -1) }))
     setOpenId(null)
   }, [])
 
   const goNextDay = useCallback(() => {
-    setDayDir(1)
-    setDay((d) => addDays(d, 1))
+    setNav((prev) => ({ dir: 1, day: addDays(prev.day, 1) }))
     setOpenId(null)
   }, [])
 
   const goToday = useCallback(() => {
-    setDayDir(0)
-    setDay(startOfDay(new Date()))
+    const target = startOfDay(new Date())
+    setNav((prev) => ({ dir: target > prev.day ? 1 : target < prev.day ? -1 : 0, day: target }))
     setOpenId(null)
   }, [])
 
   const prevCalMonth = useCallback(() => {
-    setCalDir(-1)
-    setCalendarMonth((d) => addMonths(d, -1))
+    setCal((prev) => ({ dir: -1, month: addMonths(prev.month, -1) }))
   }, [])
 
   const nextCalMonth = useCallback(() => {
-    setCalDir(1)
-    setCalendarMonth((d) => addMonths(d, 1))
+    setCal((prev) => ({ dir: 1, month: addMonths(prev.month, 1) }))
   }, [])
 
   const onTouchStart = (e: React.TouchEvent) => {
@@ -147,6 +160,8 @@ export function ScheduleScreen({
     const dy = t.clientY - touchRef.current.y
     touchRef.current = null
     if (Math.abs(dx) > 56 && Math.abs(dx) > Math.abs(dy) * 1.15) {
+      // dx > 0 means swipe right → go to previous day (direction = -1)
+      // dx < 0 means swipe left  → go to next day     (direction = +1)
       if (dx > 0) goPrevDay()
       else goNextDay()
     }
@@ -333,13 +348,14 @@ export function ScheduleScreen({
             </div>
 
             {/* Animated grid */}
-            <AnimatePresence mode="wait" custom={calDir} initial={false}>
+            <AnimatePresence mode="wait" custom={cal.dir} initial={false}>
               <motion.div
                 key={formatMonthYear(calendarMonth)}
-                custom={calDir}
-                initial={{ x: calDir > 0 ? 40 : -40, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: calDir > 0 ? -40 : 40, opacity: 0 }}
+                custom={cal.dir}
+                variants={calSlideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
                 transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                 className="grid grid-cols-7 gap-1"
               >
@@ -424,13 +440,14 @@ export function ScheduleScreen({
       {/* ── List view ──────────────────────────────────────────────── */}
       {viewMode === 'list' && (
         <div className="mt-4 flex-1 overflow-hidden" ref={listRef}>
-          <AnimatePresence mode="wait" custom={dayDir} initial={false}>
+          <AnimatePresence mode="wait" custom={nav.dir} initial={false}>
             <motion.div
               key={key}
-              custom={dayDir}
-              initial={{ x: (dayDir > 0 ? 60 : dayDir < 0 ? -60 : 0), opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: (dayDir > 0 ? -60 : 60), opacity: 0 }}
+              custom={nav.dir}
+              variants={daySlideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
               className="h-full overflow-y-auto px-4 pb-28"
               onTouchStart={onTouchStart}
@@ -696,145 +713,158 @@ export function ScheduleScreen({
               exit={{ y: '100%' }}
               transition={{ type: 'spring', stiffness: 320, damping: 32 }}
               drag="y"
-              dragConstraints={{ top: 0, bottom: 0 }}
-              dragElastic={{ top: 0, bottom: 0.25 }}
+              dragConstraints={{ top: 0 }}
+              dragElastic={{ top: 0, bottom: 0.15 }}
               onDragEnd={(_, info) => {
-                if (info.offset.y > 80) setAddOpen(false)
+                // Dismiss if dragged down more than 40% of the sheet (approx 88dvh * 0.4)
+                const sheetH = window.innerHeight * 0.88
+                if (info.offset.y > sheetH * 0.4) {
+                  setAddOpen(false)
+                }
               }}
-              className="fixed inset-x-0 bottom-0 z-50 max-h-[88dvh] overflow-y-auto rounded-t-[28px] border border-white/[0.08] bg-[#0b0d16] p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-[0_-24px_80px_-20px_rgba(0,0,0,0.6)]"
+              className="fixed inset-x-0 bottom-0 z-50 flex max-h-[88dvh] flex-col rounded-t-[28px] border border-white/[0.08] bg-[#0b0d16] shadow-[0_-24px_80px_-20px_rgba(0,0,0,0.6)]"
             >
-              <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20 cursor-grab" />
-              <h3 id="add-block-title" className="text-lg font-semibold text-white">New block</h3>
-              <p className="mt-1 text-sm text-rize-muted">
-                For {formatDayHeading(day)}. Repeats apply on every matching day.
-              </p>
-
-              <div className="mt-6 space-y-4">
-                {/* Title */}
-                <label className="block">
-                  <span className="text-xs font-medium text-rize-muted">Title</span>
-                  <input
-                    value={draft.title}
-                    onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
-                    className="mt-1.5 w-full rounded-xl border border-rize-border bg-[#0a0c14] px-3 py-2.5 text-sm text-white placeholder:text-rize-muted focus:border-rize-accent/50 focus:outline-none focus:ring-1 focus:ring-rize-accent/40"
-                    placeholder="e.g. Focus sprint"
-                    autoComplete="off"
-                  />
-                </label>
-
-                {/* Time pickers */}
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="block">
-                    <span className="text-xs font-medium text-rize-muted">Start</span>
-                    <input
-                      type="time"
-                      value={draft.start}
-                      onChange={(e) => setDraft((d) => ({ ...d, start: e.target.value }))}
-                      className="mt-1.5 w-full rounded-xl border border-rize-border bg-[#0a0c14] px-3 py-2.5 text-sm text-white focus:border-rize-accent/50 focus:outline-none focus:ring-1 focus:ring-rize-accent/40"
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="text-xs font-medium text-rize-muted">End</span>
-                    <input
-                      type="time"
-                      value={draft.end}
-                      onChange={(e) => setDraft((d) => ({ ...d, end: e.target.value }))}
-                      className="mt-1.5 w-full rounded-xl border border-rize-border bg-[#0a0c14] px-3 py-2.5 text-sm text-white focus:border-rize-accent/50 focus:outline-none focus:ring-1 focus:ring-rize-accent/40"
-                    />
-                  </label>
-                </div>
-
-                {/* Category with colour preview */}
-                <div>
-                  <span className="text-xs font-medium text-rize-muted">Category</span>
-                  <div className="mt-1.5 flex gap-2">
-                    {(['Health', 'Work', 'Personal', 'Other'] as Category[]).map((cat) => (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => setDraft((d) => ({ ...d, category: cat }))}
-                        className={`flex flex-1 flex-col items-center gap-1.5 rounded-xl border py-2.5 text-[10px] font-semibold transition touch-manipulation ${
-                          draft.category === cat
-                            ? 'border-rize-accent/50 bg-rize-accent/10 text-white'
-                            : 'border-rize-border bg-[#0a0c14] text-rize-muted hover:border-rize-accent/30'
-                        }`}
-                      >
-                        <span className={`h-2.5 w-2.5 rounded-full ${categoryDot[cat]}`} />
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Priority toggle */}
-                <div className="flex items-center justify-between rounded-xl border border-rize-border bg-[#0a0c14] px-4 py-3">
-                  <div>
-                    <p className="text-sm font-medium text-white">Priority block</p>
-                    <p className="text-xs text-rize-muted">Gets a brighter border and ★ in the list</p>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={draft.priority}
-                    onClick={() => setDraft((d) => ({ ...d, priority: !d.priority }))}
-                    className={`relative h-7 w-12 rounded-full transition-colors touch-manipulation ${
-                      draft.priority ? 'bg-rize-accent' : 'bg-rize-border'
-                    }`}
-                  >
-                    <motion.span
-                      layout
-                      className="absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow"
-                      animate={{ x: draft.priority ? 20 : 0 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                    />
-                  </button>
-                </div>
-
-                {/* Repeat */}
-                <label className="block">
-                  <span className="text-xs font-medium text-rize-muted">Repeat</span>
-                  <select
-                    value={draft.repeat}
-                    onChange={(e) => setDraft((d) => ({ ...d, repeat: e.target.value as typeof d.repeat }))}
-                    className="mt-1.5 w-full rounded-xl border border-rize-border bg-[#0a0c14] px-3 py-2.5 text-sm text-white focus:border-rize-accent/50 focus:outline-none focus:ring-1 focus:ring-rize-accent/40"
-                  >
-                    <option value="none">Once — only this day</option>
-                    <option value="daily">Daily</option>
-                    <option value="weekdays">Weekdays (Mon–Fri)</option>
-                    <option value="weekly">
-                      Weekly — every {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day.getDay()]}
-                    </option>
-                  </select>
-                </label>
-
-                {/* Notes */}
-                <label className="block">
-                  <span className="text-xs font-medium text-rize-muted">Notes</span>
-                  <textarea
-                    value={draft.notes}
-                    onChange={(e) => setDraft((d) => ({ ...d, notes: e.target.value }))}
-                    rows={2}
-                    className="mt-1.5 w-full resize-none rounded-xl border border-rize-border bg-[#0a0c14] px-3 py-2.5 text-sm text-white placeholder:text-rize-muted focus:border-rize-accent/50 focus:outline-none focus:ring-1 focus:ring-rize-accent/40"
-                    placeholder="Optional"
-                  />
-                </label>
+              {/* Fixed: drag handle + header */}
+              <div className="shrink-0 px-6 pb-4 pt-5">
+                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20 cursor-grab" />
+                <h3 id="add-block-title" className="text-lg font-semibold text-white">New block</h3>
+                <p className="mt-1 text-sm text-rize-muted">
+                  For {formatDayHeading(day)}. Repeats apply on every matching day.
+                </p>
               </div>
 
-              <div className="mt-6 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setAddOpen(false)}
-                  className="flex-1 rounded-2xl border border-rize-border py-3 text-sm font-semibold text-rize-muted transition hover:bg-white/5 touch-manipulation"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={saveNew}
-                  className="flex-1 rounded-2xl bg-rize-accent py-3 text-sm font-semibold text-white shadow-[0_12px_32px_-8px_rgba(157,78,221,0.5)] transition hover:bg-[#a855f0] touch-manipulation"
-                >
-                  {draft.repeat === 'none' ? 'Add to day' : 'Save repeat'}
-                </button>
+              {/* Scrollable content area */}
+              <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2">
+                <div className="space-y-4 pb-2">
+                  {/* Title */}
+                  <label className="block">
+                    <span className="text-xs font-medium text-rize-muted">Title</span>
+                    <input
+                      value={draft.title}
+                      onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+                      className="mt-1.5 w-full rounded-xl border border-rize-border bg-[#0a0c14] px-3 py-2.5 text-sm text-white placeholder:text-rize-muted focus:border-rize-accent/50 focus:outline-none focus:ring-1 focus:ring-rize-accent/40"
+                      placeholder="e.g. Focus sprint"
+                      autoComplete="off"
+                    />
+                  </label>
+
+                  {/* Time pickers */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="text-xs font-medium text-rize-muted">Start</span>
+                      <input
+                        type="time"
+                        value={draft.start}
+                        onChange={(e) => setDraft((d) => ({ ...d, start: e.target.value }))}
+                        className="mt-1.5 w-full rounded-xl border border-rize-border bg-[#0a0c14] px-3 py-2.5 text-sm text-white focus:border-rize-accent/50 focus:outline-none focus:ring-1 focus:ring-rize-accent/40"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs font-medium text-rize-muted">End</span>
+                      <input
+                        type="time"
+                        value={draft.end}
+                        onChange={(e) => setDraft((d) => ({ ...d, end: e.target.value }))}
+                        className="mt-1.5 w-full rounded-xl border border-rize-border bg-[#0a0c14] px-3 py-2.5 text-sm text-white focus:border-rize-accent/50 focus:outline-none focus:ring-1 focus:ring-rize-accent/40"
+                      />
+                    </label>
+                  </div>
+
+                  {/* Category with colour preview */}
+                  <div>
+                    <span className="text-xs font-medium text-rize-muted">Category</span>
+                    <div className="mt-1.5 flex gap-2">
+                      {(['Health', 'Work', 'Personal', 'Other'] as Category[]).map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => setDraft((d) => ({ ...d, category: cat }))}
+                          className={`flex flex-1 flex-col items-center gap-1.5 rounded-xl border py-2.5 text-[10px] font-semibold transition touch-manipulation ${
+                            draft.category === cat
+                              ? 'border-rize-accent/50 bg-rize-accent/10 text-white'
+                              : 'border-rize-border bg-[#0a0c14] text-rize-muted hover:border-rize-accent/30'
+                          }`}
+                        >
+                          <span className={`h-2.5 w-2.5 rounded-full ${categoryDot[cat]}`} />
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Priority toggle */}
+                  <div className="flex items-center justify-between rounded-xl border border-rize-border bg-[#0a0c14] px-4 py-3">
+                    <div>
+                      <p className="text-sm font-medium text-white">Priority block</p>
+                      <p className="text-xs text-rize-muted">Gets a brighter border and ★ in the list</p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={draft.priority}
+                      onClick={() => setDraft((d) => ({ ...d, priority: !d.priority }))}
+                      className={`relative h-7 w-12 rounded-full transition-colors touch-manipulation ${
+                        draft.priority ? 'bg-rize-accent' : 'bg-rize-border'
+                      }`}
+                    >
+                      <motion.span
+                        layout
+                        className="absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow"
+                        animate={{ x: draft.priority ? 20 : 0 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Repeat */}
+                  <label className="block">
+                    <span className="text-xs font-medium text-rize-muted">Repeat</span>
+                    <select
+                      value={draft.repeat}
+                      onChange={(e) => setDraft((d) => ({ ...d, repeat: e.target.value as typeof d.repeat }))}
+                      className="mt-1.5 w-full rounded-xl border border-rize-border bg-[#0a0c14] px-3 py-2.5 text-sm text-white focus:border-rize-accent/50 focus:outline-none focus:ring-1 focus:ring-rize-accent/40"
+                    >
+                      <option value="none">Once — only this day</option>
+                      <option value="daily">Daily</option>
+                      <option value="weekdays">Weekdays (Mon–Fri)</option>
+                      <option value="weekly">
+                        Weekly — every {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day.getDay()]}
+                      </option>
+                    </select>
+                  </label>
+
+                  {/* Notes */}
+                  <label className="block">
+                    <span className="text-xs font-medium text-rize-muted">Notes</span>
+                    <textarea
+                      value={draft.notes}
+                      onChange={(e) => setDraft((d) => ({ ...d, notes: e.target.value }))}
+                      rows={2}
+                      className="mt-1.5 w-full resize-none rounded-xl border border-rize-border bg-[#0a0c14] px-3 py-2.5 text-sm text-white placeholder:text-rize-muted focus:border-rize-accent/50 focus:outline-none focus:ring-1 focus:ring-rize-accent/40"
+                      placeholder="Optional"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Fixed: action buttons always visible at bottom */}
+              <div className="shrink-0 border-t border-white/[0.06] px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setAddOpen(false)}
+                    className="flex-1 rounded-2xl border border-rize-border py-3 text-sm font-semibold text-rize-muted transition hover:bg-white/5 touch-manipulation"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={saveNew}
+                    className="flex-1 rounded-2xl bg-rize-accent py-3 text-sm font-semibold text-white shadow-[0_12px_32px_-8px_rgba(157,78,221,0.5)] transition hover:bg-[#a855f0] touch-manipulation"
+                  >
+                    {draft.repeat === 'none' ? 'Add to day' : 'Save repeat'}
+                  </button>
+                </div>
               </div>
             </motion.div>
           </>

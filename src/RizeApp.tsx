@@ -73,7 +73,7 @@ export default function RizeApp() {
       >
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rize-accent/90">Rize</p>
-          <p className="text-sm text-rize-muted">Coach in your pocket</p>
+          <p className="text-[11px] text-rize-muted/70">Interactive demo — layout of the real app</p>
         </div>
       </header>
 

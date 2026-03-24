@@ -26,3 +26,26 @@ body {
 #root {
   min-height: 100dvh;
 }
+
+/* Themed scrollbar — thin, purple-tinted, dark track */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(157, 78, 221, 0.25) transparent;
+}
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(157, 78, 221, 0.22);
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(157, 78, 221, 0.45);
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}

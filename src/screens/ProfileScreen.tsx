@@ -14,11 +14,11 @@ export function ProfileScreen({ onLogout }: Props) {
     <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-4 pb-28 pt-2">
       <div className="flex flex-col items-center text-center">
         <div className="h-24 w-24 rounded-full bg-gradient-to-br from-rize-accent to-violet-600 p-[3px] shadow-[0_16px_48px_-12px_rgba(157,78,221,0.5)]">
-          <div className="flex h-full w-full items-center justify-center rounded-full bg-[#0c0d18] text-3xl font-bold text-white">
-            R
+          <div className="flex h-full w-full items-center justify-center rounded-full bg-[#0c0d18] text-3xl font-bold text-rize-muted/60">
+            ?
           </div>
         </div>
-        <h2 className="mt-4 text-xl font-semibold text-white">Riley</h2>
+        <h2 className="mt-4 text-xl font-semibold text-white">Could be you</h2>
         <p className="text-sm text-rize-muted">Morning person in progress</p>
       </div>
 

@@ -1,6 +1,15 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, ArrowRight, BarChart3, CalendarDays, Heart, Sun } from 'lucide-react'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
+
+// Variants defined outside so they're never recreated.
+// dir > 0 = right arrow (next): exits left, enters from right
+// dir < 0 = left arrow (prev): exits right, enters from left
+const featureSlideVariants = {
+  enter: (dir: number) => ({ x: dir >= 0 ? 120 : -120, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit:  (dir: number) => ({ x: dir >= 0 ? -120 : 120, opacity: 0 }),
+}
 import { Link } from 'react-router-dom'
 import { SITE } from './config'
 import { SiteFooter } from './SiteFooter'
@@ -99,15 +108,24 @@ function FeatureMock({ featureIndex }: { featureIndex: number }) {
 }
 
 function FeaturesCarousel() {
-  const [index, setIndex] = useState(0)
-  const [dir, setDir] = useState(0)
+  // dir and index are ONE atomic state update — always in sync on the same render.
+  const [slide, setSlide] = useState({ index: 0, dir: 0 })
 
-  const go = (next: number) => {
-    setDir(next)
-    setIndex((i) => (i + next + features.length) % features.length)
-  }
+  const go = useCallback((delta: number) => {
+    setSlide((prev) => ({
+      dir: delta,
+      index: (prev.index + delta + features.length) % features.length,
+    }))
+  }, [])
 
-  const f = features[index]
+  const goTo = useCallback((i: number) => {
+    setSlide((prev) => {
+      if (i === prev.index) return prev
+      return { dir: i > prev.index ? 1 : -1, index: i }
+    })
+  }, [])
+
+  const f = features[slide.index]
 
   return (
     <motion.div
@@ -130,13 +148,14 @@ function FeaturesCarousel() {
         </button>
 
         <div className="min-h-[260px] flex-1 overflow-hidden sm:min-h-[300px] lg:min-h-[340px]">
-          <AnimatePresence mode="wait" custom={dir} initial={false}>
+          <AnimatePresence mode="wait" custom={slide.dir} initial={false}>
             <motion.div
-              key={index}
-              custom={dir}
-              initial={{ x: dir >= 0 ? 120 : -120, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: dir >= 0 ? -120 : 120, opacity: 0 }}
+              key={slide.index}
+              custom={slide.dir}
+              variants={featureSlideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               className="h-full rounded-[28px] border border-white/[0.08] bg-gradient-to-br from-[#15162a]/95 to-[#0a0b14] p-8 shadow-[0_32px_80px_-32px_rgba(0,0,0,0.6)] ring-1 ring-white/[0.04] sm:p-10 lg:p-12"
             >
@@ -148,7 +167,7 @@ function FeaturesCarousel() {
               </motion.span>
               <h2 className="text-xl font-semibold text-white sm:text-2xl lg:text-3xl">{f.title}</h2>
               <p className="mt-4 text-base leading-relaxed text-rize-muted sm:text-lg lg:text-xl">{f.body}</p>
-              <FeatureMock featureIndex={index} />
+              <FeatureMock featureIndex={slide.index} />
             </motion.div>
           </AnimatePresence>
         </div>
@@ -168,15 +187,11 @@ function FeaturesCarousel() {
           <button
             key={i}
             type="button"
-            onClick={() => {
-              if (i === index) return
-              setDir(i > index ? 1 : -1)
-              setIndex(i)
-            }}
+            onClick={() => goTo(i)}
             aria-label={`Go to slide ${i + 1}`}
-            aria-current={i === index ? 'true' : undefined}
+            aria-current={i === slide.index ? 'true' : undefined}
             className={`h-2 rounded-full transition-all touch-manipulation ${
-              i === index
+              i === slide.index
                 ? 'w-8 bg-rize-accent'
                 : 'w-2 bg-white/20 hover:bg-white/40'
             }`}
