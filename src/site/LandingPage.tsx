@@ -44,9 +44,9 @@ function FeaturesCarousel() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.12, duration: 0.5 }}
-      className="mx-auto mt-16 max-w-4xl"
+      className="mx-auto mt-16 w-full max-w-5xl lg:mt-20 lg:max-w-6xl xl:max-w-7xl"
     >
-      <p className="mb-8 text-center text-sm font-medium text-rize-muted">
+      <p className="mb-8 text-center text-sm font-medium text-rize-muted sm:text-base lg:text-lg">
         What you&apos;ll find inside
       </p>
       <div className="relative flex items-stretch gap-4 px-12 sm:px-16">
@@ -59,7 +59,7 @@ function FeaturesCarousel() {
           <ArrowLeft className="h-6 w-6 sm:h-7 sm:w-7" />
         </button>
 
-        <div className="min-h-[240px] flex-1 overflow-hidden sm:min-h-[280px]">
+        <div className="min-h-[260px] flex-1 overflow-hidden sm:min-h-[300px] lg:min-h-[340px]">
           <AnimatePresence mode="wait" custom={dir} initial={false}>
             <motion.div
               key={index}
@@ -68,16 +68,16 @@ function FeaturesCarousel() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: dir >= 0 ? -120 : 120, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="h-full rounded-[28px] border border-white/[0.08] bg-gradient-to-br from-[#15162a]/95 to-[#0a0b14] p-8 shadow-[0_32px_80px_-32px_rgba(0,0,0,0.6)] ring-1 ring-white/[0.04] sm:p-10"
+              className="h-full rounded-[28px] border border-white/[0.08] bg-gradient-to-br from-[#15162a]/95 to-[#0a0b14] p-8 shadow-[0_32px_80px_-32px_rgba(0,0,0,0.6)] ring-1 ring-white/[0.04] sm:p-10 lg:p-12"
             >
               <motion.span
-                className="mb-6 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-rize-accent/15 text-rize-accent ring-1 ring-rize-accent/25 sm:h-16 sm:w-16"
+                className="mb-6 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-rize-accent/15 text-rize-accent ring-1 ring-rize-accent/25 sm:h-16 sm:w-16 lg:h-[4.5rem] lg:w-[4.5rem]"
                 layout
               >
-                <f.icon className="h-7 w-7 sm:h-8 sm:w-8" aria-hidden />
+                <f.icon className="h-7 w-7 sm:h-8 sm:w-8 lg:h-10 lg:w-10" aria-hidden />
               </motion.span>
-              <h2 className="text-xl font-semibold text-white sm:text-2xl">{f.title}</h2>
-              <p className="mt-4 text-base leading-relaxed text-rize-muted sm:text-lg">{f.body}</p>
+              <h2 className="text-xl font-semibold text-white sm:text-2xl lg:text-3xl">{f.title}</h2>
+              <p className="mt-4 text-base leading-relaxed text-rize-muted sm:text-lg lg:text-xl">{f.body}</p>
             </motion.div>
           </AnimatePresence>
         </div>
@@ -127,7 +127,7 @@ export function LandingPage() {
       </a>
 
       <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#05060d]/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8 xl:px-12">
           <Link to="/" className="flex items-baseline gap-2">
             <span className="text-sm font-semibold uppercase tracking-[0.2em] text-rize-accent/90">
               {SITE.name}
@@ -152,31 +152,33 @@ export function LandingPage() {
       </header>
 
       <main id="main">
-        <section className="mx-auto max-w-6xl px-4 pb-20 pt-14 sm:pt-20">
+        <section className="mx-auto w-full max-w-7xl px-4 pb-20 pt-14 sm:px-6 sm:pt-20 lg:px-8 lg:pt-24 xl:px-12">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="mx-auto max-w-3xl text-center"
+            className="mx-auto max-w-4xl text-center lg:max-w-5xl xl:max-w-6xl"
           >
-            <p className="text-sm text-rize-muted/90 sm:text-base">
+            <p className="text-base text-rize-muted/90 sm:text-lg lg:text-xl">
               Self-improvement, without the guilt trip.
             </p>
-            <h1 className="mt-5 text-4xl font-bold tracking-tight text-white sm:text-5xl sm:leading-[1.1]">
+            <h1 className="mt-5 text-4xl font-bold tracking-tight text-white sm:text-5xl sm:leading-[1.1] lg:text-6xl xl:text-7xl xl:leading-[1.08]">
               {SITE.name}: your pocket coach for calmer days
             </h1>
-            <p className="mt-5 text-lg leading-relaxed text-rize-muted sm:text-xl">{SITE.tagline}</p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+            <p className="mt-6 text-lg leading-relaxed text-rize-muted sm:text-xl lg:text-2xl lg:leading-relaxed">
+              {SITE.tagline}
+            </p>
+            <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6">
               <Link
                 to="/app"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-rize-accent px-8 py-4 text-base font-semibold text-white shadow-[0_20px_50px_-12px_rgba(157,78,221,0.55)] transition hover:bg-[#a855f0] sm:w-auto"
+                className="inline-flex w-full max-w-sm items-center justify-center gap-2 rounded-2xl bg-rize-accent px-10 py-4 text-base font-semibold text-white shadow-[0_20px_50px_-12px_rgba(157,78,221,0.55)] transition hover:bg-[#a855f0] sm:w-auto sm:px-12 sm:py-5 sm:text-lg"
               >
                 Try the app
-                <ArrowRight className="h-5 w-5" />
+                <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
               </Link>
               <a
                 href={`mailto:${SITE.contactEmail}?subject=${encodeURIComponent('Question about Rize')}`}
-                className="inline-flex w-full items-center justify-center rounded-2xl border border-rize-border bg-white/[0.03] px-8 py-4 text-base font-semibold text-white transition hover:border-rize-accent/40 hover:bg-white/[0.06] sm:w-auto"
+                className="inline-flex w-full max-w-sm items-center justify-center rounded-2xl border border-rize-border bg-white/[0.03] px-10 py-4 text-base font-semibold text-white transition hover:border-rize-accent/40 hover:bg-white/[0.06] sm:w-auto sm:px-12 sm:py-5 sm:text-lg"
               >
                 Contact
               </a>
@@ -190,10 +192,10 @@ export function LandingPage() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.45 }}
-            className="mx-auto mt-20 max-w-2xl text-center"
+            className="mx-auto mt-20 max-w-3xl text-center lg:mt-24 lg:max-w-4xl xl:max-w-5xl"
           >
-            <h2 className="text-2xl font-bold text-white sm:text-3xl">Built for real life</h2>
-            <p className="mt-4 text-rize-muted">
+            <h2 className="text-2xl font-bold text-white sm:text-3xl lg:text-4xl xl:text-5xl">Built for real life</h2>
+            <p className="mt-4 text-base text-rize-muted sm:text-lg lg:text-xl">
               {SITE.name} is designed as a supportive tool — not a scoreboard. Use it to show up,
               reflect, and move forward at your pace.
             </p>
