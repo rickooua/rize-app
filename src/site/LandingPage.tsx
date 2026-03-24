@@ -8,25 +8,69 @@ import { SiteFooter } from './SiteFooter'
 const features = [
   {
     title: 'Morning flow',
-    body: 'Quotes, sleep check-in, and priorities — start without overwhelm.',
+    body: 'Start with a quiet moment, a quick sleep check-in, and three priorities for the day. No overwhelm — just a calm way to orient before everything starts.',
     icon: Sun,
   },
   {
     title: 'Schedule your own',
-    body: 'Day list, calendar, repeats, and swipe between days — your rhythm.',
+    body: 'A day list you actually control. Add blocks, set repeats, swipe between days, and switch to calendar view. Your rhythm, your rules.',
     icon: CalendarDays,
   },
   {
     title: 'Honest stats',
-    body: 'See your week without judgment — habits and wins in one place.',
+    body: 'See your week — habits, check-ins, wins — without guilt. We show the shape of your effort, not a score that punishes you for missing a day.',
     icon: BarChart3,
   },
   {
     title: 'Kind by design',
-    body: 'Built for real life: progress over perfection, always.',
+    body: 'Built for real life: progress over perfection. The app nudges, it doesn’t nag. You show up when you can, and that’s enough.',
     icon: Heart,
   },
 ] as const
+
+/** Minimal wireframe-style mock of each feature for card fill. */
+function FeatureMock({ featureIndex }: { featureIndex: number }) {
+  return (
+    <div className="mt-6 flex items-end gap-2 rounded-xl border border-white/[0.04] bg-white/[0.02] p-4">
+      {featureIndex === 0 && (
+        <>
+          <div className="h-8 flex-1 rounded-lg bg-white/5" />
+          <div className="flex gap-1">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-6 w-6 rounded-md bg-rize-accent/20" />
+            ))}
+          </div>
+        </>
+      )}
+      {featureIndex === 1 && (
+        <>
+          <div className="flex flex-1 flex-col gap-2">
+            <div className="h-2 w-3/4 rounded bg-white/10" />
+            <div className="h-2 w-full rounded bg-white/10" />
+            <div className="h-2 w-2/3 rounded bg-white/10" />
+          </div>
+        </>
+      )}
+      {featureIndex === 2 && (
+        <div className="flex flex-1 items-end gap-1">
+          {[40, 65, 45, 80, 55, 70, 50].map((h, i) => (
+            <div
+              key={i}
+              className="flex-1 rounded-t bg-rize-accent/25"
+              style={{ height: `${h}%` }}
+            />
+          ))}
+        </div>
+      )}
+      {featureIndex === 3 && (
+        <div className="flex flex-1 items-center justify-center gap-2">
+          <div className="h-10 w-10 rounded-full bg-rize-accent/15" />
+          <span className="text-xs text-rize-muted/80">+1</span>
+        </div>
+      )}
+    </div>
+  )
+}
 
 function FeaturesCarousel() {
   const [index, setIndex] = useState(0)
@@ -46,9 +90,9 @@ function FeaturesCarousel() {
       transition={{ delay: 0.12, duration: 0.5 }}
       className="mx-auto mt-16 w-full max-w-5xl lg:mt-20 lg:max-w-6xl xl:max-w-7xl"
     >
-      <p className="mb-8 text-center text-sm font-medium text-rize-muted sm:text-base lg:text-lg">
+      <h2 className="mb-8 text-center text-base font-semibold text-rize-muted sm:text-lg">
         What you&apos;ll find inside
-      </p>
+      </h2>
       <div className="relative flex items-stretch gap-4 px-12 sm:px-16">
         <button
           type="button"
@@ -78,6 +122,7 @@ function FeaturesCarousel() {
               </motion.span>
               <h2 className="text-xl font-semibold text-white sm:text-2xl lg:text-3xl">{f.title}</h2>
               <p className="mt-4 text-base leading-relaxed text-rize-muted sm:text-lg lg:text-xl">{f.body}</p>
+              <FeatureMock featureIndex={index} />
             </motion.div>
           </AnimatePresence>
         </div>
@@ -144,7 +189,7 @@ export function LandingPage() {
               to="/app"
               className="inline-flex items-center gap-1.5 rounded-2xl bg-rize-accent/15 px-4 py-2 text-sm font-semibold text-rize-accent ring-1 ring-rize-accent/35 transition hover:bg-rize-accent/25"
             >
-              Open app
+              Try Rize
               <ArrowRight className="h-4 w-4" />
             </Link>
           </nav>
@@ -168,7 +213,7 @@ export function LandingPage() {
             <p className="mt-6 text-lg leading-relaxed text-rize-muted sm:text-xl lg:text-2xl lg:leading-relaxed">
               {SITE.tagline}
             </p>
-            <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6">
+            <div className="mt-12 flex flex-col items-center justify-center gap-5 sm:flex-row sm:flex-wrap sm:gap-6">
               <Link
                 to="/app"
                 className="inline-flex w-full max-w-sm items-center justify-center gap-2 rounded-2xl bg-rize-accent px-10 py-4 text-base font-semibold text-white shadow-[0_20px_50px_-12px_rgba(157,78,221,0.55)] transition hover:bg-[#a855f0] sm:w-auto sm:px-12 sm:py-5 sm:text-lg"
@@ -176,14 +221,28 @@ export function LandingPage() {
                 Try the app
                 <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
               </Link>
-              <a
-                href={`mailto:${SITE.contactEmail}?subject=${encodeURIComponent('Question about Rize')}`}
-                className="inline-flex w-full max-w-sm items-center justify-center rounded-2xl border border-rize-border bg-white/[0.03] px-10 py-4 text-base font-semibold text-white transition hover:border-rize-accent/40 hover:bg-white/[0.06] sm:w-auto sm:px-12 sm:py-5 sm:text-lg"
-              >
-                Contact
-              </a>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <a
+                  href={SITE.appStoreUrl}
+                  className="inline-flex h-12 items-center rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-xs font-medium text-white/95 transition hover:bg-white/10 hover:border-white/30"
+                  aria-label="Download on the App Store"
+                >
+                  Download on the App Store
+                </a>
+                <a
+                  href={SITE.googlePlayUrl}
+                  className="inline-flex h-12 items-center rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-xs font-medium text-white/95 transition hover:bg-white/10 hover:border-white/30"
+                  aria-label="Get it on Google Play"
+                >
+                  Get it on Google Play
+                </a>
+              </div>
             </div>
           </motion.div>
+
+          <p className="mt-12 text-center text-sm text-[#888] sm:text-base">
+            ★★★★★ {SITE.appStoreRating} on the App Store · &ldquo;{SITE.socialProof}&rdquo;
+          </p>
 
           <FeaturesCarousel />
 
@@ -192,13 +251,20 @@ export function LandingPage() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.45 }}
-            className="mx-auto mt-20 max-w-3xl text-center lg:mt-24 lg:max-w-4xl xl:max-w-5xl"
+            className="mx-auto mt-12 max-w-3xl text-center lg:mt-14 lg:max-w-4xl xl:max-w-5xl"
           >
             <h2 className="text-2xl font-bold text-white sm:text-3xl lg:text-4xl xl:text-5xl">Built for real life</h2>
             <p className="mt-4 text-base text-rize-muted sm:text-lg lg:text-xl">
               {SITE.name} is designed as a supportive tool — not a scoreboard. Use it to show up,
               reflect, and move forward at your pace.
             </p>
+            <Link
+              to="/app"
+              className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-rize-accent/15 px-6 py-3 text-sm font-semibold text-rize-accent ring-1 ring-rize-accent/35 transition hover:bg-rize-accent/25"
+            >
+              Try Rize
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </motion.section>
         </section>
       </main>

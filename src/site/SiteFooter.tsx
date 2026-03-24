@@ -1,3 +1,4 @@
+import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { SITE } from './config'
 
@@ -9,12 +10,19 @@ export function SiteFooter() {
           <p className="text-base font-semibold text-white sm:text-lg">{SITE.name}</p>
           <p className="mt-1 text-sm text-rize-muted sm:text-base">{SITE.tagline}</p>
         </div>
-        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm sm:text-base">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm sm:text-base">
+          <Link
+            to="/app"
+            className="inline-flex items-center gap-1.5 font-semibold text-rize-accent transition hover:text-rize-accent/90"
+          >
+            Try Rize
+            <ArrowRight className="h-4 w-4" />
+          </Link>
           <a
             href={`mailto:${SITE.contactEmail}`}
             className="text-rize-muted transition hover:text-white"
           >
-            {SITE.contactEmail}
+            Contact
           </a>
           <Link to="/privacy" className="text-rize-muted transition hover:text-white">
             Privacy
