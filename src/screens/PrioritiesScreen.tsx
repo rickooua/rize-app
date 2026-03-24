@@ -26,11 +26,11 @@ export function PrioritiesScreen({ onStartDay }: Props) {
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       className="flex min-h-0 flex-1 flex-col px-4 pt-2"
     >
-      <div className="flex flex-1 flex-col rounded-[28px] border border-white/[0.06] bg-rize-card/90 p-6 shadow-[0_20px_60px_-24px_rgba(0,0,0,0.55)] backdrop-blur-sm">
+      <div className="flex min-h-0 flex-1 flex-col rounded-[28px] border border-white/[0.06] bg-rize-card/90 p-6 shadow-[0_20px_60px_-24px_rgba(0,0,0,0.55)] backdrop-blur-sm">
         <h2 className="text-xl font-semibold tracking-tight text-white">Today&apos;s Priorities</h2>
         <p className="mt-1 text-sm text-rize-muted">Focus on what matters most.</p>
 
-        <ul className="mt-8 flex flex-col gap-4">
+        <ul className="mt-8 flex flex-col gap-3">
           {priorityTasks.map((task, i) => {
             const isDone = done[task.id]
             return (
@@ -44,7 +44,7 @@ export function PrioritiesScreen({ onStartDay }: Props) {
                 <button
                   type="button"
                   onClick={() => toggle(task.id)}
-                  className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-rize-border transition-colors touch-manipulation"
+                  className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-rize-border bg-white/[0.03] ring-1 ring-inset ring-white/15 transition-colors touch-manipulation"
                   style={{
                     borderColor: isDone ? 'var(--color-rize-accent)' : undefined,
                     background: isDone ? 'rgba(157, 78, 221, 0.2)' : undefined,
@@ -90,7 +90,7 @@ export function PrioritiesScreen({ onStartDay }: Props) {
           })}
         </ul>
 
-        <div className="mt-auto flex flex-1 flex-col justify-end pt-8">
+        <div className="mt-auto shrink-0 border-t border-white/[0.06] pt-4">
           <motion.button
             type="button"
             whileTap={{ scale: 0.98 }}
