@@ -8,5 +8,7 @@ export default defineConfig({
   server: {
     // Listen on LAN so you can open the app from your phone (same Wi‑Fi)
     host: true,
+    // Always open the landing page, not whatever was last visited
+    open: '/',
   },
 })
