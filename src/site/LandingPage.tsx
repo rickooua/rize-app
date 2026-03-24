@@ -28,44 +28,70 @@ const features = [
   },
 ] as const
 
-/** Minimal wireframe-style mock of each feature for card fill. */
+/** Styled mockup of each feature for card fill — flat CSS, no images. */
 function FeatureMock({ featureIndex }: { featureIndex: number }) {
   return (
-    <div className="mt-6 flex items-end gap-2 rounded-xl border border-white/[0.04] bg-white/[0.02] p-4">
+    <div className="mt-6 rounded-xl border border-white/[0.06] bg-[#13152a]/80 p-4">
       {featureIndex === 0 && (
-        <>
-          <div className="h-8 flex-1 rounded-lg bg-white/5" />
-          <div className="flex gap-1">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-6 w-6 rounded-md bg-rize-accent/20" />
+        <div className="space-y-3">
+          <p className="text-xs leading-relaxed text-rize-muted/90 italic">
+            &ldquo;Small steps compound.&rdquo;
+          </p>
+          <div className="flex gap-1.5">
+            {['😴', '😐', '🙂', '😊', '🌟'].map((e, i) => (
+              <span
+                key={i}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-sm"
+              >
+                {e}
+              </span>
             ))}
           </div>
-        </>
+        </div>
       )}
       {featureIndex === 1 && (
-        <>
-          <div className="flex flex-1 flex-col gap-2">
-            <div className="h-2 w-3/4 rounded bg-white/10" />
-            <div className="h-2 w-full rounded bg-white/10" />
-            <div className="h-2 w-2/3 rounded bg-white/10" />
-          </div>
-        </>
+        <div className="space-y-2">
+          {[
+            { time: '6:30', title: 'Wake + hydrate', bar: 'w-full' },
+            { time: '9:00', title: 'Deep work', bar: 'w-3/4' },
+            { time: '12:30', title: 'Lunch', bar: 'w-1/2' },
+          ].map((row, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="w-10 shrink-0 text-[10px] text-rize-muted">{row.time}</span>
+              <div
+                className={`h-6 rounded-md bg-rize-accent/20 ${row.bar}`}
+                style={{ minWidth: 60 }}
+              />
+            </div>
+          ))}
+        </div>
       )}
       {featureIndex === 2 && (
-        <div className="flex flex-1 items-end gap-1">
-          {[40, 65, 45, 80, 55, 70, 50].map((h, i) => (
-            <div
-              key={i}
-              className="flex-1 rounded-t bg-rize-accent/25"
-              style={{ height: `${h}%` }}
-            />
+        <div className="flex items-end justify-between gap-1">
+          {[
+            { d: 'M', h: 20 },
+            { d: 'T', h: 28 },
+            { d: 'W', h: 14 },
+            { d: 'T', h: 32 },
+            { d: 'F', h: 24 },
+            { d: 'S', h: 36 },
+            { d: 'S', h: 22 },
+          ].map(({ d, h }) => (
+            <div key={d} className="flex flex-1 flex-col items-center gap-1">
+              <div
+                className="w-full min-w-[6px] rounded-t bg-rize-accent/40"
+                style={{ height: h }}
+              />
+              <span className="text-[9px] text-rize-muted">{d}</span>
+            </div>
           ))}
         </div>
       )}
       {featureIndex === 3 && (
-        <div className="flex flex-1 items-center justify-center gap-2">
-          <div className="h-10 w-10 rounded-full bg-rize-accent/15" />
-          <span className="text-xs text-rize-muted/80">+1</span>
+        <div className="rounded-2xl border border-rize-accent/20 bg-rize-accent/5 px-4 py-3">
+          <p className="text-[11px] leading-relaxed text-rize-muted">
+            You showed up 4 days this week. That&apos;s enough.
+          </p>
         </div>
       )}
     </div>
