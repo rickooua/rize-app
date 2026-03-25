@@ -137,17 +137,19 @@ function FeaturesCarousel() {
       <h2 className="mb-8 text-center text-base font-semibold text-rize-muted sm:text-lg">
         What you&apos;ll find inside
       </h2>
-      <div className="relative flex items-stretch gap-4 px-12 sm:px-16">
+
+      {/* Card + side arrows — arrows only on sm+ so the card fills full width on mobile */}
+      <div className="relative flex items-stretch sm:gap-4 sm:px-16">
         <button
           type="button"
           onClick={() => go(-1)}
-          className="absolute -left-2 top-1/2 z-10 flex h-14 w-14 -translate-y-1/2 items-center justify-center rounded-2xl border border-white/10 bg-[#0a0c14]/95 text-white shadow-lg transition hover:border-rize-accent/40 hover:bg-rize-accent/15 focus:outline-none focus:ring-2 focus:ring-rize-accent/50 sm:-left-4 sm:h-16 sm:w-16"
+          className="absolute -left-2 top-1/2 z-10 hidden h-14 w-14 -translate-y-1/2 items-center justify-center rounded-2xl border border-white/10 bg-[#0a0c14]/95 text-white shadow-lg transition hover:border-rize-accent/40 hover:bg-rize-accent/15 focus:outline-none focus:ring-2 focus:ring-rize-accent/50 sm:-left-4 sm:flex sm:h-16 sm:w-16"
           aria-label="Previous feature"
         >
           <ArrowLeft className="h-6 w-6 sm:h-7 sm:w-7" />
         </button>
 
-        <div className="min-h-[260px] flex-1 overflow-hidden sm:min-h-[300px] lg:min-h-[340px]">
+        <div className="min-h-[300px] flex-1 overflow-hidden sm:min-h-[320px] lg:min-h-[360px]">
           <AnimatePresence mode="wait" custom={slide.dir} initial={false}>
             <motion.div
               key={slide.index}
@@ -157,16 +159,16 @@ function FeaturesCarousel() {
               animate="center"
               exit="exit"
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="h-full rounded-[28px] border border-white/[0.08] bg-gradient-to-br from-[#15162a]/95 to-[#0a0b14] p-8 shadow-[0_32px_80px_-32px_rgba(0,0,0,0.6)] ring-1 ring-white/[0.04] sm:p-10 lg:p-12"
+              className="h-full rounded-[28px] border border-white/[0.08] bg-gradient-to-br from-[#15162a]/95 to-[#0a0b14] p-7 shadow-[0_32px_80px_-32px_rgba(0,0,0,0.6)] ring-1 ring-white/[0.04] sm:p-10 lg:p-12"
             >
               <motion.span
-                className="mb-6 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-rize-accent/15 text-rize-accent ring-1 ring-rize-accent/25 sm:h-16 sm:w-16 lg:h-[4.5rem] lg:w-[4.5rem]"
+                className="mb-5 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-rize-accent/15 text-rize-accent ring-1 ring-rize-accent/25 sm:mb-6 sm:h-16 sm:w-16 lg:h-[4.5rem] lg:w-[4.5rem]"
                 layout
               >
                 <f.icon className="h-7 w-7 sm:h-8 sm:w-8 lg:h-10 lg:w-10" aria-hidden />
               </motion.span>
-              <h2 className="text-xl font-semibold text-white sm:text-2xl lg:text-3xl">{f.title}</h2>
-              <p className="mt-4 text-base leading-relaxed text-rize-muted sm:text-lg lg:text-xl">{f.body}</p>
+              <h2 className="text-2xl font-semibold text-white sm:text-2xl lg:text-3xl">{f.title}</h2>
+              <p className="mt-3 text-base leading-relaxed text-rize-muted sm:mt-4 sm:text-lg lg:text-xl">{f.body}</p>
               <FeatureMock featureIndex={slide.index} />
             </motion.div>
           </AnimatePresence>
@@ -175,14 +177,25 @@ function FeaturesCarousel() {
         <button
           type="button"
           onClick={() => go(1)}
-          className="absolute -right-2 top-1/2 z-10 flex h-14 w-14 -translate-y-1/2 items-center justify-center rounded-2xl border border-white/10 bg-[#0a0c14]/95 text-white shadow-lg transition hover:border-rize-accent/40 hover:bg-rize-accent/15 focus:outline-none focus:ring-2 focus:ring-rize-accent/50 sm:-right-4 sm:h-16 sm:w-16"
+          className="absolute -right-2 top-1/2 z-10 hidden h-14 w-14 -translate-y-1/2 items-center justify-center rounded-2xl border border-white/10 bg-[#0a0c14]/95 text-white shadow-lg transition hover:border-rize-accent/40 hover:bg-rize-accent/15 focus:outline-none focus:ring-2 focus:ring-rize-accent/50 sm:-right-4 sm:flex sm:h-16 sm:w-16"
           aria-label="Next feature"
         >
           <ArrowRight className="h-6 w-6 sm:h-7 sm:w-7" />
         </button>
       </div>
 
-      <div className="mt-8 flex items-center justify-center gap-2">
+      {/* Dots + mobile prev/next arrows in one row */}
+      <div className="mt-7 flex items-center justify-center gap-4">
+        <button
+          type="button"
+          onClick={() => go(-1)}
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-[#0a0c14]/95 text-white transition hover:border-rize-accent/40 hover:bg-rize-accent/15 focus:outline-none touch-manipulation sm:hidden"
+          aria-label="Previous feature"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+
+        <div className="flex items-center gap-2">
         {features.map((_, i) => (
           <button
             key={i}
@@ -197,6 +210,16 @@ function FeaturesCarousel() {
             }`}
           />
         ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => go(1)}
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-[#0a0c14]/95 text-white transition hover:border-rize-accent/40 hover:bg-rize-accent/15 focus:outline-none touch-manipulation sm:hidden"
+          aria-label="Next feature"
+        >
+          <ArrowRight className="h-5 w-5" />
+        </button>
       </div>
     </motion.div>
   )
