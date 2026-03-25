@@ -1,6 +1,6 @@
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { ArrowLeft, ArrowRight, BarChart3, CalendarDays, Heart, Sun } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 // Variants defined outside so they're never recreated.
 // dir > 0 = right arrow (next): exits left, enters from right
@@ -202,6 +202,109 @@ function FeaturesCarousel() {
   )
 }
 
+function HeroSection() {
+  const sectionRef = useRef<HTMLDivElement>(null)
+
+  // Cursor-tracking spring values — desktop (pointer: fine) only
+  const rawX = useMotionValue(0)
+  const rawY = useMotionValue(0)
+  const springX = useSpring(rawX, { stiffness: 60, damping: 22, mass: 0.5 })
+  const springY = useSpring(rawY, { stiffness: 60, damping: 22, mass: 0.5 })
+
+  // Title moves a bit, subtitle less, glow follows more
+  const titleX   = useTransform(springX, [-0.5, 0.5], ['-6px',  '6px'])
+  const titleY   = useTransform(springY, [-0.5, 0.5], ['-4px',  '4px'])
+  const subX     = useTransform(springX, [-0.5, 0.5], ['-3px',  '3px'])
+  const subY     = useTransform(springY, [-0.5, 0.5], ['-2px',  '2px'])
+  const glowX    = useTransform(springX, [-0.5, 0.5], ['-20px', '20px'])
+  const glowY    = useTransform(springY, [-0.5, 0.5], ['-12px', '12px'])
+
+  useEffect(() => {
+    const el = sectionRef.current
+    if (!el) return
+    if (!window.matchMedia('(pointer: fine)').matches) return
+    const onMove = (e: MouseEvent) => {
+      const r = el.getBoundingClientRect()
+      rawX.set((e.clientX - r.left) / r.width - 0.5)
+      rawY.set((e.clientY - r.top) / r.height - 0.5)
+    }
+    el.addEventListener('mousemove', onMove)
+    return () => el.removeEventListener('mousemove', onMove)
+  }, [rawX, rawY])
+
+  return (
+    <div ref={sectionRef} className="relative mx-auto max-w-4xl text-center lg:max-w-5xl xl:max-w-6xl">
+      {/* Cursor-following ambient glow */}
+      <motion.div
+        aria-hidden
+        style={{ x: glowX, y: glowY }}
+        className="pointer-events-none absolute inset-0 -z-10 mx-auto h-full w-3/4 rounded-full bg-rize-accent/10 blur-3xl"
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <p className="text-base text-rize-muted/90 sm:text-lg lg:text-xl">
+          Self-improvement, without the guilt trip.
+        </p>
+      </motion.div>
+
+      <motion.h1
+        style={{ x: titleX, y: titleY }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.55, delay: 0.07, ease: [0.22, 1, 0.36, 1] }}
+        className="mt-5 text-4xl font-bold tracking-tight text-white sm:text-5xl sm:leading-[1.1] lg:text-6xl xl:text-7xl xl:leading-[1.08]"
+      >
+        {SITE.name}: your pocket coach for calmer days
+      </motion.h1>
+
+      <motion.p
+        style={{ x: subX, y: subY }}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
+        className="mt-6 text-lg leading-relaxed text-rize-muted sm:text-xl lg:text-2xl lg:leading-relaxed"
+      >
+        {SITE.tagline}
+      </motion.p>
+
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.22, ease: [0.22, 1, 0.36, 1] }}
+        className="mt-12 flex flex-col items-center justify-center gap-5 sm:flex-row sm:flex-wrap sm:gap-6"
+      >
+        <Link
+          to="/app"
+          className="inline-flex w-full max-w-sm items-center justify-center gap-2 rounded-2xl bg-rize-accent px-10 py-4 text-base font-semibold text-white shadow-[0_20px_50px_-12px_rgba(157,78,221,0.55)] transition hover:bg-[#a855f0] sm:w-auto sm:px-12 sm:py-5 sm:text-lg"
+        >
+          Try the app
+          <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
+        </Link>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <a
+            href={SITE.appStoreUrl}
+            className="inline-flex h-12 items-center rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-xs font-medium text-white/95 transition hover:bg-white/10 hover:border-white/30"
+            aria-label="Download on the App Store"
+          >
+            Download on the App Store
+          </a>
+          <a
+            href={SITE.googlePlayUrl}
+            className="inline-flex h-12 items-center rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-xs font-medium text-white/95 transition hover:bg-white/10 hover:border-white/30"
+            aria-label="Get it on Google Play"
+          >
+            Get it on Google Play
+          </a>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
 export function LandingPage() {
   return (
     <div className="min-h-dvh bg-rize-bg bg-[radial-gradient(ellipse_120%_80%_at_50%_-20%,rgba(157,78,221,0.14),transparent)] text-[#f4f4f8]">
@@ -239,47 +342,7 @@ export function LandingPage() {
 
       <main id="main">
         <section className="mx-auto w-full max-w-7xl px-4 pb-20 pt-14 sm:px-6 sm:pt-20 lg:px-8 lg:pt-24 xl:px-12">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="mx-auto max-w-4xl text-center lg:max-w-5xl xl:max-w-6xl"
-          >
-            <p className="text-base text-rize-muted/90 sm:text-lg lg:text-xl">
-              Self-improvement, without the guilt trip.
-            </p>
-            <h1 className="mt-5 text-4xl font-bold tracking-tight text-white sm:text-5xl sm:leading-[1.1] lg:text-6xl xl:text-7xl xl:leading-[1.08]">
-              {SITE.name}: your pocket coach for calmer days
-            </h1>
-            <p className="mt-6 text-lg leading-relaxed text-rize-muted sm:text-xl lg:text-2xl lg:leading-relaxed">
-              {SITE.tagline}
-            </p>
-            <div className="mt-12 flex flex-col items-center justify-center gap-5 sm:flex-row sm:flex-wrap sm:gap-6">
-              <Link
-                to="/app"
-                className="inline-flex w-full max-w-sm items-center justify-center gap-2 rounded-2xl bg-rize-accent px-10 py-4 text-base font-semibold text-white shadow-[0_20px_50px_-12px_rgba(157,78,221,0.55)] transition hover:bg-[#a855f0] sm:w-auto sm:px-12 sm:py-5 sm:text-lg"
-              >
-                Try the app
-                <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6" />
-              </Link>
-              <div className="flex flex-wrap items-center justify-center gap-3">
-                <a
-                  href={SITE.appStoreUrl}
-                  className="inline-flex h-12 items-center rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-xs font-medium text-white/95 transition hover:bg-white/10 hover:border-white/30"
-                  aria-label="Download on the App Store"
-                >
-                  Download on the App Store
-                </a>
-                <a
-                  href={SITE.googlePlayUrl}
-                  className="inline-flex h-12 items-center rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-xs font-medium text-white/95 transition hover:bg-white/10 hover:border-white/30"
-                  aria-label="Get it on Google Play"
-                >
-                  Get it on Google Play
-                </a>
-              </div>
-            </div>
-          </motion.div>
+          <HeroSection />
 
           <p className="mt-12 text-center text-sm text-[#888] sm:text-base">
             ★★★★★ {SITE.appStoreRating} on the App Store · &ldquo;{SITE.socialProof}&rdquo;

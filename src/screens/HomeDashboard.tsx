@@ -390,7 +390,7 @@ export function HomeDashboard({ streakDays, blocksByDate, recurring, onAddBlock 
         <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-rize-muted">
           Today&apos;s habits
         </p>
-        <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-3 overflow-x-auto pb-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {DEFAULT_HABITS.map((habit) => {
             const done = habitsDone[habit.id] ?? false
             const streak = (habitStreaks[habit.id] ?? 0) + (done ? 1 : 0)

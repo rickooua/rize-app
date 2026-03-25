@@ -28,10 +28,12 @@ type Category = OneOffBlock['category']
 // Defined outside the component so they're never recreated on re-render.
 // dir > 0 = forward (left-swipe): content follows finger left — exits left, new enters from right
 // dir < 0 = backward (right-swipe): content follows finger right — exits right, new enters from left
+// No opacity — only translate. Opacity + transform compositing on mobile causes
+// the "frozen blur" bug where content gets stuck at opacity:0 on fast swipes.
 const daySlideVariants = {
-  enter: (dir: number) => ({ x: dir > 0 ? 60 : dir < 0 ? -60 : 0, opacity: 0 }),
-  center: { x: 0, opacity: 1 },
-  exit:  (dir: number) => ({ x: dir > 0 ? -60 : 60, opacity: 0 }),
+  enter: (dir: number) => ({ x: dir > 0 ? 60 : dir < 0 ? -60 : 0 }),
+  center: { x: 0 },
+  exit:  (dir: number) => ({ x: dir > 0 ? -60 : 60 }),
 }
 const calSlideVariants = {
   enter: (dir: number) => ({ x: dir >= 0 ? 40 : -40, opacity: 0 }),
@@ -450,6 +452,7 @@ export function ScheduleScreen({
               exit="exit"
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
               className="h-full overflow-y-auto px-4 pb-28"
+              style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}
               onTouchStart={onTouchStart}
               onTouchEnd={onTouchEnd}
             >

@@ -1,4 +1,6 @@
+import { ArrowLeft } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { BottomNav, type TabId } from './components/BottomNav'
 import { dateKey, defaultBlocks, type OneOffBlock, type RecurringBlock, startOfDay } from './lib/schedule'
 import { HomeDashboard } from './screens/HomeDashboard'
@@ -71,9 +73,18 @@ export default function RizeApp() {
           paddingRight: 'max(1rem, env(safe-area-inset-right))',
         }}
       >
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rize-accent/90">Rize</p>
-          <p className="text-[11px] text-rize-muted/70">Interactive demo — layout of the real app</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rize-accent/90">Rize</p>
+            <p className="text-[11px] text-rize-muted/70">Interactive demo — layout of the real app</p>
+          </div>
+          <Link
+            to="/"
+            className="flex items-center gap-1 rounded-xl border border-rize-border bg-rize-card/80 px-3 py-1.5 text-[11px] font-medium text-rize-muted transition hover:border-rize-accent/30 hover:text-white touch-manipulation"
+          >
+            <ArrowLeft className="h-3 w-3" />
+            Website
+          </Link>
         </div>
       </header>
 
