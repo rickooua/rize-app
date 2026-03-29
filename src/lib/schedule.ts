@@ -1,5 +1,14 @@
 export type Category = 'Health' | 'Work' | 'Personal' | 'Other'
 
+export type TaskItem = {
+  id: string
+  label: string
+}
+
+// Two block types: a reminder is a regular timed block;
+// a task block embeds a checklist that must be completed.
+export type BlockType = 'reminder' | 'task'
+
 export type OneOffBlock = {
   id: string
   start: string
@@ -8,6 +17,8 @@ export type OneOffBlock = {
   notes: string
   category: Category
   priority?: boolean
+  blockType?: BlockType  // undefined = 'reminder' (backwards-compat)
+  tasks?: TaskItem[]
 }
 
 export type RecurringBlock = OneOffBlock & {
@@ -41,12 +52,26 @@ export const categoryLabel: Record<Category, string> = {
 }
 
 export const defaultBlocks: OneOffBlock[] = [
-  { id: 'b1', start: '6:30', end: '7:15', title: 'Wake + hydrate', notes: 'Glass of water, open the blinds, no phone for 10 min.', category: 'Health' },
+  {
+    id: 'task1', start: '6:30', end: '7:15', title: 'Morning Rituals', notes: 'High-priority morning checklist.', category: 'Health', priority: true, blockType: 'task',
+    tasks: [
+      { id: 'task1-1', label: 'Drink 500ml water immediately after waking' },
+      { id: 'task1-2', label: 'Make bed before leaving the room' },
+      { id: 'task1-3', label: 'Step outside for 2 min of fresh air' },
+    ],
+  },
   { id: 'b2', start: '7:30', end: '8:00', title: 'Stretch & light walk', notes: '10 min mobility, optional loop outside.', category: 'Health' },
   { id: 'b3', start: '9:00', end: '11:30', title: 'Deep work — milestone', notes: 'Focus on the one milestone; notifications off.', category: 'Work' },
   { id: 'b4', start: '12:30', end: '13:15', title: 'Lunch + reset', notes: 'Step away from the desk.', category: 'Personal' },
   { id: 'b5', start: '14:00', end: '16:00', title: 'Collaboration block', notes: 'Meetings & async replies.', category: 'Work' },
-  { id: 'b6', start: '18:00', end: '19:00', title: 'Gym / movement', notes: '', category: 'Health' },
+  {
+    id: 'task2', start: '17:30', end: '18:30', title: 'Evening Wellbeing', notes: 'Wind down and care for your body.', category: 'Health', priority: true, blockType: 'task',
+    tasks: [
+      { id: 'task2-1', label: 'Complete 3km run or 30 min walk' },
+      { id: 'task2-2', label: 'Drink final 750ml of water for the day' },
+      { id: 'task2-3', label: 'Prepare healthy meal or veggies' },
+    ],
+  },
   { id: 'b7', start: '21:00', end: '21:30', title: 'Wind-down journal', notes: "Three lines: win, tension, tomorrow's first step.", category: 'Personal' },
 ]
 

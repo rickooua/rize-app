@@ -1,9 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, List, Plus, Repeat, Trash2 } from 'lucide-react'
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, List, ListChecks, Plus, Repeat, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   addDays,
   addMonths,
+  type BlockType,
   categoryBar,
   categoryDot,
   dateKey,
@@ -20,20 +21,19 @@ import {
   repeatLabel,
   startOfDay,
   startOfMonth,
+  type TaskItem,
   toTimeInput,
 } from '../lib/schedule'
 
 type Category = OneOffBlock['category']
 
-// Defined outside the component so they're never recreated on re-render.
-// dir > 0 = forward (left-swipe): content follows finger left — exits left, new enters from right
-// dir < 0 = backward (right-swipe): content follows finger right — exits right, new enters from left
-// No opacity — only translate. Opacity + transform compositing on mobile causes
-// the "frozen blur" bug where content gets stuck at opacity:0 on fast swipes.
+// Full-width simultaneous slide — old exits while new enters at the same time,
+// like a real phone page-swipe. Use '100%' so travel = container width exactly.
+// No opacity: keeps content always visible and avoids GPU compositing artifacts.
 const daySlideVariants = {
-  enter: (dir: number) => ({ x: dir > 0 ? 60 : dir < 0 ? -60 : 0 }),
+  enter: (dir: number) => ({ x: dir > 0 ? '100%' : dir < 0 ? '-100%' : 0 }),
   center: { x: 0 },
-  exit:  (dir: number) => ({ x: dir > 0 ? -60 : 60 }),
+  exit:  (dir: number) => ({ x: dir > 0 ? '-100%' : '100%' }),
 }
 const calSlideVariants = {
   enter: (dir: number) => ({ x: dir >= 0 ? 40 : -40, opacity: 0 }),
@@ -84,12 +84,14 @@ export function ScheduleScreen({
     category: 'Personal' as Category,
     repeat: 'none' as 'none' | 'daily' | 'weekdays' | 'weekly',
     priority: false,
+    blockType: 'reminder' as BlockType,
+    tasks: [] as TaskItem[],
   })
 
   // FAB scroll-aware: hide label on scroll down, show on scroll up
   const [fabCompact, setFabCompact] = useState(false)
   const lastScrollY = useRef(0)
-  const listRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null) // kept for potential future use
 
   const touchRef = useRef<{ x: number; y: number } | null>(null)
 
@@ -106,25 +108,14 @@ export function ScheduleScreen({
   // Open add sheet if requested by parent
   useEffect(() => {
     if (openAddOnMount) {
-      setDraft({ title: '', start: '09:00', end: '10:00', notes: '', category: 'Personal', repeat: 'none', priority: false })
+      setDraft({ title: '', start: '09:00', end: '10:00', notes: '', category: 'Personal', repeat: 'none', priority: false, blockType: 'reminder', tasks: [] })
       setAddOpen(true)
       onAddMounted?.()
     }
   }, [openAddOnMount, onAddMounted])
 
-  // Scroll tracking for FAB compact mode
-  useEffect(() => {
-    const el = listRef.current
-    if (!el) return
-    const handler = () => {
-      const y = el.scrollTop
-      if (y > lastScrollY.current + 12) setFabCompact(true)
-      if (y < lastScrollY.current - 8) setFabCompact(false)
-      lastScrollY.current = y
-    }
-    el.addEventListener('scroll', handler, { passive: true })
-    return () => el.removeEventListener('scroll', handler)
-  }, [viewMode])
+  // Scroll tracking is handled inline via onScroll on the motion.div
+  // (the motion div remounts on each day change, so a ref-based useEffect wouldn't re-register)
 
   const goPrevDay = useCallback(() => {
     setNav((prev) => ({ dir: -1, day: addDays(prev.day, -1) }))
@@ -194,7 +185,7 @@ export function ScheduleScreen({
   }
 
   const openAdd = () => {
-    setDraft({ title: '', start: '09:00', end: '10:00', notes: '', category: 'Personal', repeat: 'none', priority: false })
+    setDraft({ title: '', start: '09:00', end: '10:00', notes: '', category: 'Personal', repeat: 'none', priority: false, blockType: 'reminder', tasks: [] })
     setAddOpen(true)
   }
 
@@ -202,13 +193,21 @@ export function ScheduleScreen({
     const title = draft.title.trim() || 'Untitled block'
     const start = fromTimeInput(draft.start)
     const end = fromTimeInput(draft.end)
+    const validTasks = draft.tasks.filter((t) => t.label.trim())
+    // When in calendar view use the day the user selected on the calendar
+    const targetDay = viewMode === 'calendar' ? selectedCalDay : day
+    const targetKey = dateKey(targetDay)
     if (draft.repeat === 'none') {
-      const block: OneOffBlock = { id: newId('blk'), title, start, end, notes: draft.notes, category: draft.category, priority: draft.priority }
-      setBlocksByDate((prev) => ({ ...prev, [key]: [...(prev[key] ?? []), block] }))
+      const block: OneOffBlock = {
+        id: newId('blk'), title, start, end, notes: draft.notes, category: draft.category,
+        priority: draft.priority, blockType: draft.blockType,
+        ...(draft.blockType === 'task' && validTasks.length > 0 && { tasks: validTasks }),
+      }
+      setBlocksByDate((prev) => ({ ...prev, [targetKey]: [...(prev[targetKey] ?? []), block] }))
     } else {
       const block: RecurringBlock = {
         id: newId('rec'), title, start, end, notes: draft.notes, category: draft.category, priority: draft.priority,
-        repeat: draft.repeat, weeklyDay: day.getDay(),
+        repeat: draft.repeat, weeklyDay: targetDay.getDay(),
       }
       setRecurring((prev) => [...prev, block])
     }
@@ -441,8 +440,8 @@ export function ScheduleScreen({
 
       {/* ── List view ──────────────────────────────────────────────── */}
       {viewMode === 'list' && (
-        <div className="mt-4 flex-1 overflow-hidden" ref={listRef}>
-          <AnimatePresence mode="wait" custom={nav.dir} initial={false}>
+        <div className="relative mt-4 flex-1 overflow-hidden">
+          <AnimatePresence custom={nav.dir} initial={false}>
             <motion.div
               key={key}
               custom={nav.dir}
@@ -450,9 +449,15 @@ export function ScheduleScreen({
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="h-full overflow-y-auto px-4 pb-28"
-              style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}
+              transition={{ type: 'spring', stiffness: 340, damping: 34, mass: 0.9 }}
+              className="absolute inset-0 overflow-y-auto px-4 pb-28"
+              style={{ willChange: 'transform' }}
+              onScroll={(e) => {
+                const y = (e.currentTarget as HTMLDivElement).scrollTop
+                if (y > lastScrollY.current + 12) setFabCompact(true)
+                if (y < lastScrollY.current - 8) setFabCompact(false)
+                lastScrollY.current = y
+              }}
               onTouchStart={onTouchStart}
               onTouchEnd={onTouchEnd}
             >
@@ -493,9 +498,14 @@ export function ScheduleScreen({
                           <div className={`w-1.5 shrink-0 self-stretch rounded-full ${bar}${b.priority ? ' shadow-[0_0_8px_2px_rgba(157,78,221,0.35)]' : ''}`} />
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-baseline justify-between gap-2">
-                              <h3 className="font-semibold text-white">
-                                {b.priority && <span className="mr-1.5 text-rize-accent">★</span>}
+                              <h3 className="flex items-center gap-1.5 font-semibold text-white">
+                                {b.priority && <span className="text-rize-accent">★</span>}
                                 {b.title}
+                                {b.blockType === 'task' && (
+                                  <span className="rounded bg-rize-accent/12 px-1 py-px text-[9px] font-bold uppercase tracking-widest text-rize-accent/70 align-middle">
+                                    task
+                                  </span>
+                                )}
                               </h3>
                               <span className="text-xs text-rize-muted">{formatDuration(b.start, b.end)}</span>
                             </div>
@@ -508,6 +518,12 @@ export function ScheduleScreen({
                                 <span className="inline-flex items-center gap-1 rounded-full bg-rize-accent/10 px-2.5 py-0.5 text-[11px] font-medium text-rize-accent ring-1 ring-rize-accent/25">
                                   <Repeat className="h-3 w-3" aria-hidden />
                                   {repeatLabel(row.block)}
+                                </span>
+                              )}
+                              {b.tasks && b.tasks.length > 0 && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-rize-accent/10 px-2.5 py-0.5 text-[11px] font-medium text-rize-accent/70 ring-1 ring-rize-accent/20">
+                                  <ListChecks className="h-3 w-3" aria-hidden />
+                                  {b.tasks.length} task{b.tasks.length !== 1 ? 's' : ''}
                                 </span>
                               )}
                             </div>
@@ -630,6 +646,24 @@ export function ScheduleScreen({
                                   />
                                 </label>
 
+                                {/* Task checklist (read-only display) */}
+                                {b.tasks && b.tasks.length > 0 && (
+                                  <div>
+                                    <p className="mb-2 text-xs font-medium text-rize-muted">
+                                      <ListChecks className="mr-1 inline h-3.5 w-3.5 text-rize-accent/60" />
+                                      Checklist <span className="text-rize-muted/50">(complete from Home)</span>
+                                    </p>
+                                    <div className="space-y-1.5">
+                                      {b.tasks.map((task) => (
+                                        <div key={task.id} className="flex items-center gap-2 rounded-lg border border-white/[0.07] bg-white/[0.03] px-3 py-2">
+                                          <div className="h-4 w-4 shrink-0 rounded border border-white/20" />
+                                          <span className="text-sm text-rize-muted">{task.label}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
                                 <button
                                   type="button"
                                   onClick={() => row.kind === 'once' ? removeOneOff(b.id) : removeRecurring(b.id)}
@@ -732,13 +766,43 @@ export function ScheduleScreen({
                 <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20 cursor-grab" />
                 <h3 id="add-block-title" className="text-lg font-semibold text-white">New block</h3>
                 <p className="mt-1 text-sm text-rize-muted">
-                  For {formatDayHeading(day)}. Repeats apply on every matching day.
+                  For {formatDayHeading(viewMode === 'calendar' ? selectedCalDay : day)}. Repeats apply on every matching day.
                 </p>
               </div>
 
               {/* Scrollable content area */}
               <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2">
                 <div className="space-y-4 pb-2">
+
+                  {/* Block type selector */}
+                  <div className="flex gap-2 rounded-2xl border border-rize-border bg-[#0a0c14]/60 p-1">
+                    {([
+                      { value: 'reminder', emoji: '🔔', label: 'Reminder', desc: 'A timed note or event' },
+                      { value: 'task',     emoji: '☑️',  label: 'Task',     desc: 'Block with a checklist' },
+                    ] as const).map(({ value, emoji, label, desc }) => (
+                      <button
+                        key={value} type="button"
+                        onClick={() => setDraft((d) => ({
+                          ...d,
+                          blockType: value,
+                          // Auto-add one empty task item when switching to task
+                          tasks: value === 'task' && d.tasks.length === 0
+                            ? [{ id: `t-${Date.now()}`, label: '' }]
+                            : value === 'reminder' ? [] : d.tasks,
+                        }))}
+                        className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl py-3 transition touch-manipulation ${
+                          draft.blockType === value
+                            ? 'bg-rize-accent/15 ring-1 ring-rize-accent/30'
+                            : 'text-rize-muted hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        <span className="text-lg leading-none">{emoji}</span>
+                        <span className={`text-[13px] font-semibold ${draft.blockType === value ? 'text-white' : 'text-rize-muted'}`}>{label}</span>
+                        <span className="text-[10px] text-rize-muted/60">{desc}</span>
+                      </button>
+                    ))}
+                  </div>
+
                   {/* Title */}
                   <label className="block">
                     <span className="text-xs font-medium text-rize-muted">Title</span>
@@ -835,6 +899,50 @@ export function ScheduleScreen({
                       </option>
                     </select>
                   </label>
+
+                  {/* Task checklist — only shown for task blocks */}
+                  {draft.blockType === 'task' && (
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-rize-muted">Checklist items</span>
+                        <button
+                          type="button"
+                          onClick={() => setDraft((d) => ({ ...d, tasks: [...d.tasks, { id: `t-${Date.now()}`, label: '' }] }))}
+                          className="flex items-center gap-1 rounded-lg bg-rize-accent/15 px-2.5 py-1.5 text-xs font-semibold text-rize-accent transition hover:bg-rize-accent/25 touch-manipulation"
+                        >
+                          <Plus className="h-3 w-3" />
+                          Add item
+                        </button>
+                      </div>
+                      <div className="mt-2 space-y-2">
+                        {draft.tasks.map((task, i) => (
+                          <div key={task.id} className="flex items-center gap-2">
+                            <div className="h-4 w-4 shrink-0 rounded border-2 border-rize-accent/30" />
+                            <input
+                              value={task.label}
+                              onChange={(e) => setDraft((d) => ({
+                                ...d,
+                                tasks: d.tasks.map((t, j) => j === i ? { ...t, label: e.target.value } : t),
+                              }))}
+                              placeholder={`Item ${i + 1}`}
+                              autoFocus={i === draft.tasks.length - 1}
+                              className="flex-1 rounded-xl border border-rize-border bg-[#0a0c14] px-3 py-2 text-sm text-white placeholder:text-rize-muted/50 focus:border-rize-accent/50 focus:outline-none focus:ring-1 focus:ring-rize-accent/40"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setDraft((d) => ({ ...d, tasks: d.tasks.filter((_, j) => j !== i) }))}
+                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-rize-muted/50 transition hover:text-rize-muted touch-manipulation"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                        {draft.tasks.length === 0 && (
+                          <p className="text-xs text-rize-muted/50">No items yet — add one above.</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Notes */}
                   <label className="block">
